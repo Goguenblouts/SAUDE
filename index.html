@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meu Cronograma de Saúde</title>
+    <title>Minha Saúde - Cronograma</title>
     
     <!-- Configurações de Web App (PWA) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Minha Saúde">
+    <meta name="apple-mobile-web-app-title" content="Saúde">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#4f46e5">
     
@@ -38,31 +38,32 @@
             min-height: 100vh;
             background-color: #f8fafc; 
             color: #0f172a;
-            padding-bottom: 120px;
+            /* Padding inferior extra para garantir que o Minoxidil apareça acima da navegação */
+            padding-bottom: 180px;
             overflow-x: hidden;
             overflow-y: auto;
-            /* Evita seleção de texto e menus de contexto no mobile para parecer mais app */
             -webkit-user-select: none;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .dark body { background-color: #020617; color: #f8fafc; }
         .card-bg { background-color: #ffffff; border: 1px solid #e2e8f0; }
         .dark .card-bg { background-color: #0f172a; border-color: #1e293b; }
         
-        .nav-bg { background-color: rgba(255, 255, 255, 0.9); border-top: 1px solid #e2e8f0; }
-        .dark .nav-bg { background-color: rgba(15, 23, 42, 0.95); border-top-color: #1e293b; }
+        .nav-bg { background-color: rgba(255, 255, 255, 0.95); border-top: 1px solid #e2e8f0; }
+        .dark .nav-bg { background-color: rgba(15, 23, 42, 0.98); border-top-color: #1e293b; }
         
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: slideUp 0.4s ease-out; }
         
         @keyframes slideUp { 
-            from { opacity: 0; transform: translateY(15px); } 
+            from { opacity: 0; transform: translateY(20px); } 
             to { opacity: 1; transform: translateY(0); } 
         }
         
-        .active-nav { color: var(--app-primary); font-weight: 700; }
-        .completed-card { opacity: 0.4; filter: grayscale(0.9); pointer-events: none; border-style: dashed; }
+        .active-nav { color: var(--app-primary); font-weight: 800; }
+        .completed-card { opacity: 0.4; filter: grayscale(1); pointer-events: none; border-style: dashed; }
         
         .modal { 
             display: none; 
@@ -79,7 +80,7 @@
             width: 100%; 
             border-radius: 32px 32px 0 0; 
             padding: 32px 24px; 
-            max-height: 90vh;
+            max-height: 85vh;
             overflow-y: auto;
             transform: translateY(100%); 
             transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
@@ -90,26 +91,29 @@
 </head>
 <body>
 
-    <header class="bg-white dark:bg-slate-900 border-b dark:border-slate-800 sticky top-0 z-30 px-6 py-5 flex justify-between items-center backdrop-blur-md">
+    <!-- Header Fixo -->
+    <header class="bg-white/80 dark:bg-slate-900/80 border-b dark:border-slate-800 sticky top-0 z-30 px-6 py-5 flex justify-between items-center backdrop-blur-md transition-colors">
         <div>
             <h1 class="text-xl font-extrabold tracking-tight">Saúde Pessoal</h1>
-            <p id="current-date" class="text-[11px] text-indigo-500 font-bold uppercase tracking-widest"></p>
+            <p id="current-date" class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest"></p>
         </div>
-        <button onclick="requestNotificationPermission()" class="bg-indigo-50 dark:bg-indigo-900/30 p-2.5 rounded-2xl text-indigo-600 active:scale-90 transition-transform">
+        <button onclick="window.requestNotificationPermission()" class="bg-indigo-50 dark:bg-indigo-900/30 p-2.5 rounded-2xl text-indigo-600 active:scale-90 transition-transform">
             <i data-lucide="bell" class="w-5 h-5"></i>
         </button>
     </header>
 
     <main id="app-container" class="max-w-md mx-auto p-4 space-y-6">
+        
+        <!-- Tab: INÍCIO (AGENDA) -->
         <div id="tab-hoje" class="tab-content active space-y-6">
             <section class="bg-indigo-600 dark:bg-indigo-700 rounded-[32px] p-7 text-white shadow-2xl relative overflow-hidden">
                 <div class="relative z-10">
                     <div class="flex justify-between items-start mb-6">
                         <div>
-                            <p class="opacity-70 text-xs font-bold uppercase tracking-widest mb-1 text-white">Progresso Diário</p>
-                            <h2 id="daily-progress" class="text-4xl font-black tracking-tighter text-white">0 / 10</h2>
+                            <p class="opacity-80 text-xs font-bold uppercase tracking-widest mb-1 text-white">Metas de Hoje</p>
+                            <h2 id="daily-progress" class="text-4xl font-black tracking-tighter text-white">0 / 0</h2>
                         </div>
-                        <div class="bg-white/20 p-3 rounded-2xl"><i data-lucide="award" class="w-7 h-7 text-white"></i></div>
+                        <div class="bg-white/20 p-3 rounded-2xl"><i data-lucide="activity" class="w-7 h-7 text-white"></i></div>
                     </div>
                     <div class="w-full bg-white/20 h-3 rounded-full overflow-hidden">
                         <div id="progress-bar" class="bg-white h-full transition-all duration-700" style="width: 0%"></div>
@@ -117,73 +121,105 @@
                 </div>
                 <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
             </section>
+
             <section class="space-y-4">
-                <h3 class="text-sm font-black px-1 text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Agenda Diária</h3>
-                <div id="med-list" class="grid gap-4"></div>
+                <h3 class="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Próximas Doses</h3>
+                <div id="med-list" class="grid gap-4">
+                    <!-- Gerado por JS -->
+                </div>
             </section>
         </div>
 
+        <!-- Tab: CALENDÁRIO (TRACKER) -->
         <div id="tab-calendario" class="tab-content space-y-6">
-            <h3 class="text-sm font-black px-1 text-slate-400 dark:text-slate-500 uppercase tracking-widest">Acompanhamento</h3>
+            <h3 class="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 text-center">Histórico Salvo</h3>
             <div class="card-bg rounded-[32px] p-6 shadow-xl"><div id="calendar-grid" class="grid grid-cols-7 gap-3 text-center"></div></div>
             <div id="day-summary" class="bg-indigo-50 dark:bg-indigo-900/20 p-5 rounded-3xl text-indigo-800 dark:text-indigo-300 text-xs font-medium border border-indigo-100 dark:border-indigo-900/50 text-center">Selecione um dia acima</div>
         </div>
 
+        <!-- Tab: MANUAL (BULAS DETALHADAS) -->
         <div id="tab-manual" class="tab-content space-y-6 pb-10">
-            <h3 class="text-sm font-black px-1 text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Bulas e Manuais</h3>
-            <div id="manual-list" class="space-y-4"></div>
+            <h3 class="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center px-1">Informações dos Produtos</h3>
+            <div id="manual-list" class="space-y-4">
+                <!-- Gerado por JS -->
+            </div>
         </div>
 
+        <!-- Tab: AJUSTES -->
         <div id="tab-config" class="tab-content space-y-6 pb-10">
-            <h3 class="text-sm font-black px-1 text-slate-400 dark:text-slate-500 uppercase tracking-widest">Ajustes</h3>
+            <h3 class="text-sm font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Configurações</h3>
             <div class="card-bg rounded-[32px] p-6 shadow-xl space-y-8">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="bg-slate-100 dark:bg-slate-800 p-2.5 rounded-2xl"><i data-lucide="moon" class="w-5 h-5 text-indigo-600"></i></div>
+                        <div class="bg-slate-100 dark:bg-slate-800 p-2.5 rounded-2xl transition-colors">
+                            <i data-lucide="moon" class="w-5 h-5 text-indigo-600"></i>
+                        </div>
                         <span class="text-sm font-bold">Modo Escuro</span>
                     </div>
                     <button onclick="window.toggleDarkMode()" id="dark-mode-toggle" class="w-14 h-7 bg-slate-200 dark:bg-indigo-600 rounded-full relative transition-colors"><div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform transform dark:translate-x-7"></div></button>
+                </div>
+                <div class="pt-6 border-t dark:border-slate-800">
+                    <button onclick="window.clearAllData()" class="w-full bg-rose-50 text-rose-600 py-4 rounded-2xl text-xs font-bold uppercase tracking-widest active:scale-95 transition-transform">Resetar Todos os Dados</button>
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- Modal de Detalhes -->
     <div id="med-modal" class="modal" onclick="closeModal(event)">
         <div class="modal-content shadow-2xl" onclick="event.stopPropagation()">
             <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8"></div>
             <div id="modal-color-tag" class="w-16 h-16 rounded-3xl flex items-center justify-center text-white shadow-xl mb-4"><i id="modal-icon" data-lucide="pill" class="w-8 h-8"></i></div>
-            <h2 id="modal-title" class="text-2xl font-black tracking-tight mb-1">Título</h2>
+            <h2 id="modal-title" class="text-2xl font-black tracking-tight mb-1"></h2>
             <p id="modal-freq" class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase mb-6 tracking-widest"></p>
             <div class="space-y-6">
                 <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[28px] border border-slate-100 dark:border-slate-800">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 text-indigo-500">Informações</p>
-                    <div id="modal-manual-full" class="text-[13px] leading-relaxed font-medium space-y-2"></div>
+                    <p class="text-[10px] font-black uppercase text-indigo-500 mb-3">Como utilizar e Advertências</p>
+                    <div id="modal-manual-full" class="text-[13px] leading-relaxed font-medium space-y-3 opacity-90"></div>
                 </div>
                 <button id="modal-action-btn" class="w-full bg-indigo-600 text-white py-5 rounded-3xl font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all">Registrar Dose</button>
             </div>
         </div>
     </div>
 
-    <nav class="nav-bg fixed bottom-0 left-0 right-0 backdrop-blur-xl px-4 py-4 flex justify-between items-center max-w-md mx-auto z-40">
-        <button onclick="switchTab('hoje')" id="nav-hoje" class="flex flex-col items-center gap-1 active-nav transition-all"><i data-lucide="home" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">Início</span></button>
-        <button onclick="switchTab('calendario')" id="nav-calendario" class="flex flex-col items-center gap-1 text-slate-400 transition-all"><i data-lucide="calendar" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">Tracker</span></button>
-        <button onclick="switchTab('manual')" id="nav-manual" class="flex flex-col items-center gap-1 text-slate-400 transition-all"><i data-lucide="book-open" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">Manual</span></button>
-        <button onclick="switchTab('config')" id="nav-config" class="flex flex-col items-center gap-1 text-slate-400 transition-all"><i data-lucide="settings-2" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">Ajustes</span></button>
+    <!-- Navegação Inferior Fixa -->
+    <nav class="nav-bg fixed bottom-0 left-0 right-0 backdrop-blur-xl px-4 py-5 flex justify-between items-center max-w-md mx-auto z-40 shadow-[0_-10px_40px_rgba(0,0,0,0.08)]">
+        <button onclick="switchTab('hoje')" id="nav-hoje" class="flex flex-col items-center gap-1 active-nav transition-all"><i data-lucide="home" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase">Início</span></button>
+        <button onclick="switchTab('calendario')" id="nav-calendario" class="flex flex-col items-center gap-1 text-slate-400 transition-all"><i data-lucide="calendar" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase">Tracker</span></button>
+        <button onclick="switchTab('manual')" id="nav-manual" class="flex flex-col items-center gap-1 text-slate-400 transition-all"><i data-lucide="book-open" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase">Manual</span></button>
+        <button onclick="switchTab('config')" id="nav-config" class="flex flex-col items-center gap-1 text-slate-400 transition-all"><i data-lucide="settings-2" class="w-5 h-5"></i><span class="text-[9px] font-black uppercase">Ajustes</span></button>
     </nav>
 
     <script>
         const medsData = [
-            { id: 'fits36', nome: 'FitS36', dose: '1 cápsula (600mg)', freq: '1-2h antes almoço', vezesAoDia: 2, tipo: 'pill', cor: 'bg-rose-500', obs: 'Evite o uso noturno.', manual: 'Fórmula com Laranja Moro, Psyllium e Cafeína.' },
-            { id: 'secabarriga', nome: 'Seca Barriga', dose: '1 cápsula (500mg)', freq: '2x ao dia', vezesAoDia: 2, tipo: 'pill', cor: 'bg-amber-500', obs: 'Controle de apetite.', manual: 'Com Nóis da Índia. Frasco com 120 cápsulas.' },
-            { id: 'cromo', nome: 'Picolinato Cromo', dose: '1 cápsula (250mcg)', freq: '15 min pós almoço', vezesAoDia: 1, tipo: 'pill', cor: 'bg-slate-600', obs: 'Auxilia no metabolismo.', manual: 'Ingerir com 200ml de água.' },
-            { id: 'magnesio', nome: 'Pro3Magnésio', dose: '2 cápsulas', freq: 'Noite (pós jantar)', vezesAoDia: 1, tipo: 'pill', cor: 'bg-cyan-600', obs: 'Relaxamento muscular.', manual: 'Bisglicinato e Malato + L-Treonina.' },
-            { id: 'fitdreams', nome: 'Fit Dreams', dose: '1 cápsula', freq: '30 min antes dormir', vezesAoDia: 1, tipo: 'pill', cor: 'bg-indigo-900', obs: 'Induz o sono profundo.', manual: 'Melatonina e Triptofano.' },
-            { id: 'minoxidil', nome: 'Minoxidil Kirkland', dose: '1ml (6 borrifadas)', freq: 'Manhã e Noite', vezesAoDia: 2, tipo: 'drop', cor: 'bg-blue-600', obs: 'Massagear no rosto seco.', manual: 'Solução tópica 5% para barba.' }
+            { id: 'fits36', nome: 'FitS36 - Fórmula Avançada', dose: '1 cápsula (600mg)', freq: '2x ao dia (1 a 2h antes do almoço)', vezesAoDia: 2, tipo: 'pill', cor: 'bg-rose-500', obs: 'Evitar uso noturno.', manual: 'Com Laranja Moro, Psyllium, Spirulina, Cromo, Cafeína e L-Carnitina.' },
+            { id: 'secabarriga', nome: 'Seca Barriga Nutri Life', dose: '1 cápsula (500mg)', freq: '2x ao dia', vezesAoDia: 2, tipo: 'pill', cor: 'bg-amber-500', obs: 'Beba bastante água. Ação desintoxicante.', manual: 'Com Nóz da Índia. Frasco com 120 cápsulas.' },
+            { id: 'cromo', nome: 'Picolinato de Cromo', dose: '1 cápsula (250mcg)', freq: '15 min após refeição principal', vezesAoDia: 1, tipo: 'pill', cor: 'bg-slate-600', obs: 'Auxilia no metabolismo.', manual: 'Ajuda no metabolismo de gorduras e carboidratos.' },
+            { id: 'magnesio', nome: 'Pro3Magnésio', dose: '2 cápsulas', freq: 'Noite (após o jantar)', vezesAoDia: 1, tipo: 'pill', cor: 'bg-cyan-600', obs: 'Pode amolecer as fezes.', manual: 'Mix de Bisglicinato, Malato e Óxido + Treonina.' },
+            { id: 'fitdreams', nome: 'Fit Dreams - Sleep & Relax', dose: '1 cápsula', freq: '30 min antes de dormir', vezesAoDia: 1, tipo: 'pill', cor: 'bg-indigo-900', obs: 'Causa sonolência intensa.', manual: 'Melatonina, Triptofano, Magnésio, Vitaminas B6 e B9.' },
+            { id: 'minoxidil', nome: 'Minoxidil Kirkland', dose: '1ml (6 borrifadas)', freq: '2x ao dia (Manhã e Noite)', vezesAoDia: 2, tipo: 'drop', cor: 'bg-blue-600', obs: 'Uso na barba. Pele seca.', manual: 'Solução 5%. Uso exclusivo masculino. Uso contínuo.' }
         ];
 
+        // --- LÓGICA DE PERSISTÊNCIA ---
+        const STORAGE_KEY = 'minha_saude_v1';
         let appState = { history: [], darkMode: false };
 
+        // Carrega do navegador ao iniciar
+        function loadState() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                appState = JSON.parse(saved);
+                if (appState.darkMode) document.documentElement.classList.add('dark');
+            }
+        }
+
+        // Salva no navegador sempre que algo muda
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        }
+
         function init() {
+            loadState();
             document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' });
             renderMeds(); renderManual(); renderCalendar(); updateProgress(); lucide.createIcons();
         }
@@ -194,7 +230,7 @@
             const total = medsData.reduce((acc, m) => acc + m.vezesAoDia, 0);
             document.getElementById('daily-progress').innerText = `${dosesHoje} / ${total}`;
             const bar = document.getElementById('progress-bar');
-            if (bar) bar.style.width = `${(dosesHoje / total) * 100}%`;
+            if (bar) bar.style.width = `${(dosesHoje / (total || 1)) * 100}%`;
         }
 
         function renderMeds() {
@@ -204,20 +240,21 @@
                 const tomadas = appState.history.filter(h => h.medId == med.id && h.timestamp >= startOfDay).length;
                 const done = tomadas >= med.vezesAoDia;
                 return `<div onclick="openDetails('${med.id}')" class="card-bg rounded-[28px] p-5 shadow-lg flex items-center justify-between transition-all ${done ? 'completed-card' : 'active:scale-95 cursor-pointer'}">
-                    <div class="flex items-center gap-4"><div class="${med.cor} w-14 h-14 rounded-2xl flex items-center justify-center text-white"><i data-lucide="${med.tipo === 'pill' ? 'pill' : 'droplets'}" class="w-6 h-6"></i></div>
-                    <div><h4 class="font-bold text-sm">${med.nome}</h4><div class="flex flex-col gap-1 mt-1 text-[10px]"><span class="text-indigo-600 dark:text-indigo-400 font-black uppercase">${med.freq}</span>
-                    <span class="text-slate-400 font-bold">${tomadas}/${med.vezesAoDia} doses</span></div></div></div>
-                    <i data-lucide="${done ? 'check-circle' : 'plus'}" class="w-7 h-7 ${done ? 'text-emerald-500' : 'text-slate-300'}"></i></div>`;
+                    <div class="flex items-center gap-4"><div class="${med.cor} w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg"><i data-lucide="${med.tipo === 'pill' ? 'pill' : 'droplets'}" class="w-6 h-6 text-white"></i></div>
+                    <div><h4 class="font-bold text-sm leading-tight">${med.nome}</h4><div class="flex flex-col gap-1 mt-1 text-[10px]"><span class="text-indigo-600 dark:text-indigo-400 font-extrabold uppercase">${med.freq}</span>
+                    <span class="text-slate-400 font-bold">${tomadas}/${med.vezesAoDia} doses tomadas</span></div></div></div>
+                    <i data-lucide="${done ? 'check-circle' : 'plus'}" class="w-7 h-7 ${done ? 'text-emerald-500' : 'text-slate-200'}"></i></div>`;
             }).join('');
             lucide.createIcons();
         }
 
         function renderManual() {
             const list = document.getElementById('manual-list');
-            list.innerHTML = medsData.map(med => `<div class="card-bg rounded-[32px] p-6 space-y-4 border border-slate-100 dark:border-slate-800">
-                <div class="flex items-center gap-4"><div class="${med.cor} w-12 h-12 rounded-2xl flex items-center justify-center text-white"><i data-lucide="${med.tipo === 'pill' ? 'pill' : 'droplets'}" class="w-6 h-6"></i></div><h4 class="font-extrabold text-lg">${med.nome}</h4></div>
-                <div class="bg-indigo-50 dark:bg-slate-800/50 p-4 rounded-2xl"><p class="text-[9px] font-black uppercase text-indigo-500 mb-1 text-center">Posologia</p><p class="text-xs font-bold text-center">${med.dose} • ${med.freq}</p></div>
-                <p class="text-[11px] leading-relaxed opacity-80">${med.manual}</p><p class="text-[10px] text-rose-500 italic font-medium">${med.obs}</p></div>`).join('');
+            list.innerHTML = medsData.map(med => `<div class="card-bg rounded-[32px] p-6 space-y-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+                <div class="flex items-center gap-4"><div class="${med.cor} w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md"><i data-lucide="${med.tipo === 'pill' ? 'pill' : 'droplets'}" class="w-6 h-6 text-white"></i></div><h4 class="font-extrabold text-lg leading-tight tracking-tight">${med.nome}</h4></div>
+                <div class="bg-indigo-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-900/40 text-center"><p class="text-[9px] font-black uppercase text-indigo-500 mb-1">Posologia Sugerida</p><p class="text-xs font-bold">${med.dose} • ${med.freq}</p></div>
+                <div class="px-1"><p class="text-[12px] leading-relaxed opacity-90">${med.manual}</p></div>
+                <div class="px-1 border-t dark:border-slate-800 pt-4"><p class="text-[9px] font-black uppercase text-rose-500 mb-1 tracking-widest flex items-center gap-1"><i data-lucide="alert-circle" class="w-2.5 h-2.5"></i> CUIDADOS</p><p class="text-[11px] text-rose-600/80 dark:text-rose-400 font-medium italic leading-relaxed">${med.obs}</p></div></div>`).join('');
             lucide.createIcons();
         }
 
@@ -230,9 +267,9 @@
                 const date = new Date(dateObj.getFullYear(), dateObj.getMonth(), i).setHours(0,0,0,0);
                 const count = appState.history.filter(h => new Date(h.timestamp).setHours(0,0,0,0) === date).length;
                 const meta = medsData.reduce((acc, m) => acc + m.vezesAoDia, 0);
-                let cls = count >= meta ? 'bg-indigo-600 text-white' : count > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400';
+                let cls = count >= meta ? 'bg-indigo-600 text-white shadow-md' : count > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400';
                 if (date > Date.now()) cls = 'opacity-20';
-                grid.innerHTML += `<button onclick="viewDay(${date})" class="aspect-square rounded-2xl flex items-center justify-center text-xs font-black ${cls}">${i}</button>`;
+                grid.innerHTML += `<button onclick="viewDay(${date})" class="aspect-square rounded-2xl flex items-center justify-center text-xs font-black transition-all ${cls}">${i}</button>`;
             }
         }
 
@@ -243,7 +280,7 @@
             document.getElementById('modal-freq').innerText = med.freq;
             document.getElementById('modal-manual-full').innerHTML = `<p>${med.manual}</p><p class="text-rose-500 italic mt-2">${med.obs}</p>`;
             const btn = document.getElementById('modal-action-btn');
-            if (taken >= med.vezesAoDia) { btn.innerText = "Meta Batida"; btn.disabled = true; btn.classList.add('opacity-40'); }
+            if (taken >= med.vezesAoDia) { btn.innerText = "Doses Concluídas"; btn.disabled = true; btn.classList.add('opacity-40'); }
             else { btn.innerText = "Registrar Dose"; btn.disabled = false; btn.classList.remove('opacity-40'); btn.onclick = () => { markTaken(id); closeModal(); }; }
             document.getElementById('modal-color-tag').className = `${med.cor} w-16 h-16 rounded-3xl flex items-center justify-center text-white shadow-xl mb-4`;
             document.getElementById('med-modal').classList.add('active');
@@ -253,11 +290,26 @@
         function markTaken(id) {
             const med = medsData.find(m => m.id == id);
             appState.history.push({ medId: id, nome: med.nome, timestamp: Date.now() });
+            saveState(); // Salva no LocalStorage
             renderMeds(); renderCalendar(); updateProgress();
         }
 
+        window.clearAllData = () => {
+            if(confirm("Tem certeza que deseja apagar todo o histórico salvo?")) {
+                appState.history = [];
+                saveState();
+                location.reload();
+            }
+        }
+
         window.closeModal = () => document.getElementById('med-modal').classList.remove('active');
-        window.toggleDarkMode = () => { appState.darkMode = !appState.darkMode; document.documentElement.classList.toggle('dark', appState.darkMode); }
+        
+        window.toggleDarkMode = () => { 
+            appState.darkMode = !appState.darkMode; 
+            document.documentElement.classList.toggle('dark', appState.darkMode); 
+            saveState(); 
+        }
+
         window.switchTab = (id) => {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(b => { b.classList.remove('active-nav'); b.classList.add('text-slate-400'); });
@@ -265,14 +317,17 @@
             if(tab) tab.classList.add('active'); if(nav) { nav.classList.add('active-nav'); nav.classList.remove('text-slate-400'); }
             window.scrollTo(0, 0); lucide.createIcons();
         }
+
         window.viewDay = (t) => {
             const date = new Date(t);
-            const count = appState.history.filter(h => new Date(h.timestamp).setHours(0,0,0,0) === t).length;
-            document.getElementById('day-summary').innerHTML = `<strong>${date.toLocaleDateString()}:</strong> ${count} doses registradas.`;
+            const medsDia = appState.history.filter(h => new Date(h.timestamp).setHours(0,0,0,0) === t);
+            document.getElementById('day-summary').innerHTML = medsDia.length > 0 ? `<strong>${date.toLocaleDateString()}:</strong> ${medsDia.length} doses registradas.` : `Sem registros para ${date.toLocaleDateString()}.`;
         }
+
         window.requestNotificationPermission = () => {
             if ("Notification" in window) Notification.requestPermission().then(p => { if (p === 'granted') alert("Notificações ligadas!"); });
         };
+        
         window.onload = init;
     </script>
 </body>

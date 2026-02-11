@@ -1,89 +1,279 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-
+<html lang="pt-br" class="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatórios ML - Eletropel</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meu Cronograma de Saúde</title>
+    
+    <!-- Configurações de Web App (PWA) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Minha Saúde">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#4f46e5">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        
+        :root { --app-primary: #4f46e5; }
+        
+        html { height: -webkit-fill-available; }
+        
+        body { 
+            transition: background-color 0.4s ease, color 0.4s ease; 
+            min-height: 100vh;
+            background-color: #f8fafc; 
+            color: #0f172a;
+            padding-bottom: 120px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            /* Evita seleção de texto e menus de contexto no mobile para parecer mais app */
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        .dark body { background-color: #020617; color: #f8fafc; }
+        .card-bg { background-color: #ffffff; border: 1px solid #e2e8f0; }
+        .dark .card-bg { background-color: #0f172a; border-color: #1e293b; }
+        
+        .nav-bg { background-color: rgba(255, 255, 255, 0.9); border-top: 1px solid #e2e8f0; }
+        .dark .nav-bg { background-color: rgba(15, 23, 42, 0.95); border-top-color: #1e293b; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: slideUp 0.4s ease-out; }
+        
+        @keyframes slideUp { 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        
+        .active-nav { color: var(--app-primary); font-weight: 700; }
+        .completed-card { opacity: 0.4; filter: grayscale(0.9); pointer-events: none; border-style: dashed; }
+        
+        .modal { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(2, 6, 23, 0.7); 
+            backdrop-filter: blur(8px);
+            z-index: 50; 
+            align-items: flex-end; 
+        }
+        .modal.active { display: flex; }
+        .modal-content { 
+            background: white; 
+            width: 100%; 
+            border-radius: 32px 32px 0 0; 
+            padding: 32px 24px; 
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(100%); 
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
+        }
+        .dark .modal-content { background: #0f172a; }
+        .modal.active .modal-content { transform: translateY(0); }
+    </style>
 </head>
-
 <body>
-    <!-- Conteúdo da Tela 1 -->
-    <div id="tela1" class="tela">
-        <img class="Fachada" 
-             src="https://eletropeldistribuidora.com.br/wp-content/webp-express/webp-images/doc-root/wp-content/uploads/2023/11/A-FRENTE-DA-LOJA-ELETROPEL.jpg.webp" 
-             alt="Fachada Eletropel">
-        <h2>O que deseja fazer?</h2>
-        <div class="grid-container">
-            <button id="botaoOpcao1">
-                <img src="https://github.com/Goguenblouts/ml/blob/main/icones/dev%20site.png?raw=true" alt="Devolução Site">
-                DEVOLUÇÃO SITE
-            </button>
-            <button id="botaoOpcao2">
-                <img src="https://github.com/Goguenblouts/ml/blob/main/icones/dev%20ml.png?raw=true" alt="Devolução ML">
-                DEVOLUÇÃO MERCADO LIVRE
-            </button>
-            <button id="botaoOpcao3">
-                <img src="https://github.com/Goguenblouts/ml/blob/main/icones/reg%20atv.png?raw=true" alt="Registro Atividades">
-                REGISTRO ATIVIDADES
-            </button>
+
+    <header class="bg-white dark:bg-slate-900 border-b dark:border-slate-800 sticky top-0 z-30 px-6 py-5 flex justify-between items-center backdrop-blur-md">
+        <div>
+            <h1 class="text-xl font-extrabold tracking-tight">Saúde Pessoal</h1>
+            <p id="current-date" class="text-[11px] text-indigo-500 font-bold uppercase tracking-widest"></p>
+        </div>
+        <button onclick="requestNotificationPermission()" class="bg-indigo-50 dark:bg-indigo-900/30 p-2.5 rounded-2xl text-indigo-600 active:scale-90 transition-transform">
+            <i data-lucide="bell" class="w-5 h-5"></i>
+        </button>
+    </header>
+
+    <main id="app-container" class="max-w-md mx-auto p-4 space-y-6">
+        <div id="tab-hoje" class="tab-content active space-y-6">
+            <section class="bg-indigo-600 dark:bg-indigo-700 rounded-[32px] p-7 text-white shadow-2xl relative overflow-hidden">
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <p class="opacity-70 text-xs font-bold uppercase tracking-widest mb-1 text-white">Progresso Diário</p>
+                            <h2 id="daily-progress" class="text-4xl font-black tracking-tighter text-white">0 / 10</h2>
+                        </div>
+                        <div class="bg-white/20 p-3 rounded-2xl"><i data-lucide="award" class="w-7 h-7 text-white"></i></div>
+                    </div>
+                    <div class="w-full bg-white/20 h-3 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="bg-white h-full transition-all duration-700" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+            </section>
+            <section class="space-y-4">
+                <h3 class="text-sm font-black px-1 text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Agenda Diária</h3>
+                <div id="med-list" class="grid gap-4"></div>
+            </section>
+        </div>
+
+        <div id="tab-calendario" class="tab-content space-y-6">
+            <h3 class="text-sm font-black px-1 text-slate-400 dark:text-slate-500 uppercase tracking-widest">Acompanhamento</h3>
+            <div class="card-bg rounded-[32px] p-6 shadow-xl"><div id="calendar-grid" class="grid grid-cols-7 gap-3 text-center"></div></div>
+            <div id="day-summary" class="bg-indigo-50 dark:bg-indigo-900/20 p-5 rounded-3xl text-indigo-800 dark:text-indigo-300 text-xs font-medium border border-indigo-100 dark:border-indigo-900/50 text-center">Selecione um dia acima</div>
+        </div>
+
+        <div id="tab-manual" class="tab-content space-y-6 pb-10">
+            <h3 class="text-sm font-black px-1 text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Bulas e Manuais</h3>
+            <div id="manual-list" class="space-y-4"></div>
+        </div>
+
+        <div id="tab-config" class="tab-content space-y-6 pb-10">
+            <h3 class="text-sm font-black px-1 text-slate-400 dark:text-slate-500 uppercase tracking-widest">Ajustes</h3>
+            <div class="card-bg rounded-[32px] p-6 shadow-xl space-y-8">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-slate-100 dark:bg-slate-800 p-2.5 rounded-2xl"><i data-lucide="moon" class="w-5 h-5 text-indigo-600"></i></div>
+                        <span class="text-sm font-bold">Modo Escuro</span>
+                    </div>
+                    <button onclick="window.toggleDarkMode()" id="dark-mode-toggle" class="w-14 h-7 bg-slate-200 dark:bg-indigo-600 rounded-full relative transition-colors"><div class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform transform dark:translate-x-7"></div></button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="med-modal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content shadow-2xl" onclick="event.stopPropagation()">
+            <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto mb-8"></div>
+            <div id="modal-color-tag" class="w-16 h-16 rounded-3xl flex items-center justify-center text-white shadow-xl mb-4"><i id="modal-icon" data-lucide="pill" class="w-8 h-8"></i></div>
+            <h2 id="modal-title" class="text-2xl font-black tracking-tight mb-1">Título</h2>
+            <p id="modal-freq" class="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase mb-6 tracking-widest"></p>
+            <div class="space-y-6">
+                <div class="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-[28px] border border-slate-100 dark:border-slate-800">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 text-indigo-500">Informações</p>
+                    <div id="modal-manual-full" class="text-[13px] leading-relaxed font-medium space-y-2"></div>
+                </div>
+                <button id="modal-action-btn" class="w-full bg-indigo-600 text-white py-5 rounded-3xl font-black text-sm uppercase tracking-widest shadow-xl active:scale-95 transition-all">Registrar Dose</button>
+            </div>
         </div>
     </div>
-    <!-- Conteúdo da Tela 2 -->
-    <div id="tela2" class="oculto">
-        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfOCUJb0bfWxNnIndN2syYBJL9WbxooMzanW2RtgNfv-3du1g/viewform?embedded=true" width="700" height="1000" frameborder="0" marginheight="0" marginwidth="0">Carregando…</iframe>
-        </iframe>
-        <button class="fixed-button" onclick="voltarAoInicio()">Voltar ao Início</button>
-    </div>
 
-    <!-- Conteúdo da Tela 3 -->
-    <div id="tela3" class="oculto">
-        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSe10FKGKsLWcFwhMBNNuIvwvUtAJIHkKozpP27LEAgxGFseqw/viewform?embedded=true" width="700" height="1000" frameborder="0" marginheight="0" marginwidth="0">Carregando…</iframe>
-        </iframe>
-        <button class="fixed-button" onclick="voltarAoInicio()">Voltar ao Início</button>
-    </div>
-
-    <!-- Conteúdo da Tela 4 -->
-    <div id="tela4" class="oculto">
-        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSeTCHuWK4artndaAnH1dqmAxkYddu8CrP2DI4MQRSu-TOL3mg/viewform?embedded=true" width="700" height="1000" frameborder="0" marginheight="0" marginwidth="0">Carregando…</iframe>
-        </iframe>
-        <button class="fixed-button" onclick="voltarAoInicio()">Voltar ao Início</button>
-    </div>
+    <nav class="nav-bg fixed bottom-0 left-0 right-0 backdrop-blur-xl px-4 py-4 flex justify-between items-center max-w-md mx-auto z-40">
+        <button onclick="switchTab('hoje')" id="nav-hoje" class="flex flex-col items-center gap-1 active-nav transition-all"><i data-lucide="home" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">Início</span></button>
+        <button onclick="switchTab('calendario')" id="nav-calendario" class="flex flex-col items-center gap-1 text-slate-400 transition-all"><i data-lucide="calendar" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">Tracker</span></button>
+        <button onclick="switchTab('manual')" id="nav-manual" class="flex flex-col items-center gap-1 text-slate-400 transition-all"><i data-lucide="book-open" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">Manual</span></button>
+        <button onclick="switchTab('config')" id="nav-config" class="flex flex-col items-center gap-1 text-slate-400 transition-all"><i data-lucide="settings-2" class="w-5 h-5"></i><span class="text-[8px] font-black uppercase">Ajustes</span></button>
+    </nav>
 
     <script>
-        // Seleção dos elementos
-        const telas = {
-            tela1: document.getElementById('tela1'),
-            tela2: document.getElementById('tela2'),
-            tela3: document.getElementById('tela3'),
-            tela4: document.getElementById('tela4')
-        };
+        const medsData = [
+            { id: 'fits36', nome: 'FitS36', dose: '1 cápsula (600mg)', freq: '1-2h antes almoço', vezesAoDia: 2, tipo: 'pill', cor: 'bg-rose-500', obs: 'Evite o uso noturno.', manual: 'Fórmula com Laranja Moro, Psyllium e Cafeína.' },
+            { id: 'secabarriga', nome: 'Seca Barriga', dose: '1 cápsula (500mg)', freq: '2x ao dia', vezesAoDia: 2, tipo: 'pill', cor: 'bg-amber-500', obs: 'Controle de apetite.', manual: 'Com Nóis da Índia. Frasco com 120 cápsulas.' },
+            { id: 'cromo', nome: 'Picolinato Cromo', dose: '1 cápsula (250mcg)', freq: '15 min pós almoço', vezesAoDia: 1, tipo: 'pill', cor: 'bg-slate-600', obs: 'Auxilia no metabolismo.', manual: 'Ingerir com 200ml de água.' },
+            { id: 'magnesio', nome: 'Pro3Magnésio', dose: '2 cápsulas', freq: 'Noite (pós jantar)', vezesAoDia: 1, tipo: 'pill', cor: 'bg-cyan-600', obs: 'Relaxamento muscular.', manual: 'Bisglicinato e Malato + L-Treonina.' },
+            { id: 'fitdreams', nome: 'Fit Dreams', dose: '1 cápsula', freq: '30 min antes dormir', vezesAoDia: 1, tipo: 'pill', cor: 'bg-indigo-900', obs: 'Induz o sono profundo.', manual: 'Melatonina e Triptofano.' },
+            { id: 'minoxidil', nome: 'Minoxidil Kirkland', dose: '1ml (6 borrifadas)', freq: 'Manhã e Noite', vezesAoDia: 2, tipo: 'drop', cor: 'bg-blue-600', obs: 'Massagear no rosto seco.', manual: 'Solução tópica 5% para barba.' }
+        ];
 
-        const botoes = {
-            botaoOpcao1: document.getElementById('botaoOpcao1'),
-            botaoOpcao2: document.getElementById('botaoOpcao2'),
-            botaoOpcao3: document.getElementById('botaoOpcao3')
-        };
+        let appState = { history: [], darkMode: false };
 
-        // Função para troca de telas
-        function mostrarTela(telaAtivar) {
-            Object.values(telas).forEach(tela => tela.classList.add('oculto'));
-            if (telas[telaAtivar]) {
-                telas[telaAtivar].classList.remove('oculto');
+        function init() {
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' });
+            renderMeds(); renderManual(); renderCalendar(); updateProgress(); lucide.createIcons();
+        }
+
+        function updateProgress() {
+            const startOfDay = new Date().setHours(0,0,0,0);
+            const dosesHoje = appState.history.filter(h => h.timestamp >= startOfDay).length;
+            const total = medsData.reduce((acc, m) => acc + m.vezesAoDia, 0);
+            document.getElementById('daily-progress').innerText = `${dosesHoje} / ${total}`;
+            const bar = document.getElementById('progress-bar');
+            if (bar) bar.style.width = `${(dosesHoje / total) * 100}%`;
+        }
+
+        function renderMeds() {
+            const list = document.getElementById('med-list');
+            const startOfDay = new Date().setHours(0,0,0,0);
+            list.innerHTML = medsData.map(med => {
+                const tomadas = appState.history.filter(h => h.medId == med.id && h.timestamp >= startOfDay).length;
+                const done = tomadas >= med.vezesAoDia;
+                return `<div onclick="openDetails('${med.id}')" class="card-bg rounded-[28px] p-5 shadow-lg flex items-center justify-between transition-all ${done ? 'completed-card' : 'active:scale-95 cursor-pointer'}">
+                    <div class="flex items-center gap-4"><div class="${med.cor} w-14 h-14 rounded-2xl flex items-center justify-center text-white"><i data-lucide="${med.tipo === 'pill' ? 'pill' : 'droplets'}" class="w-6 h-6"></i></div>
+                    <div><h4 class="font-bold text-sm">${med.nome}</h4><div class="flex flex-col gap-1 mt-1 text-[10px]"><span class="text-indigo-600 dark:text-indigo-400 font-black uppercase">${med.freq}</span>
+                    <span class="text-slate-400 font-bold">${tomadas}/${med.vezesAoDia} doses</span></div></div></div>
+                    <i data-lucide="${done ? 'check-circle' : 'plus'}" class="w-7 h-7 ${done ? 'text-emerald-500' : 'text-slate-300'}"></i></div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function renderManual() {
+            const list = document.getElementById('manual-list');
+            list.innerHTML = medsData.map(med => `<div class="card-bg rounded-[32px] p-6 space-y-4 border border-slate-100 dark:border-slate-800">
+                <div class="flex items-center gap-4"><div class="${med.cor} w-12 h-12 rounded-2xl flex items-center justify-center text-white"><i data-lucide="${med.tipo === 'pill' ? 'pill' : 'droplets'}" class="w-6 h-6"></i></div><h4 class="font-extrabold text-lg">${med.nome}</h4></div>
+                <div class="bg-indigo-50 dark:bg-slate-800/50 p-4 rounded-2xl"><p class="text-[9px] font-black uppercase text-indigo-500 mb-1 text-center">Posologia</p><p class="text-xs font-bold text-center">${med.dose} • ${med.freq}</p></div>
+                <p class="text-[11px] leading-relaxed opacity-80">${med.manual}</p><p class="text-[10px] text-rose-500 italic font-medium">${med.obs}</p></div>`).join('');
+            lucide.createIcons();
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            const dateObj = new Date();
+            grid.innerHTML = '';
+            ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].forEach(w => grid.innerHTML += `<div class="text-[10px] font-black text-slate-300 pb-2">${w}</div>`);
+            for (let i = 1; i <= new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0).getDate(); i++) {
+                const date = new Date(dateObj.getFullYear(), dateObj.getMonth(), i).setHours(0,0,0,0);
+                const count = appState.history.filter(h => new Date(h.timestamp).setHours(0,0,0,0) === date).length;
+                const meta = medsData.reduce((acc, m) => acc + m.vezesAoDia, 0);
+                let cls = count >= meta ? 'bg-indigo-600 text-white' : count > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400';
+                if (date > Date.now()) cls = 'opacity-20';
+                grid.innerHTML += `<button onclick="viewDay(${date})" class="aspect-square rounded-2xl flex items-center justify-center text-xs font-black ${cls}">${i}</button>`;
             }
         }
 
-        // Adicionando eventos aos botões
-        if (botoes.botaoOpcao1) botoes.botaoOpcao1.addEventListener('click', () => mostrarTela('tela2'));
-        if (botoes.botaoOpcao2) botoes.botaoOpcao2.addEventListener('click', () => mostrarTela('tela3'));
-        if (botoes.botaoOpcao3) botoes.botaoOpcao3.addEventListener('click', () => mostrarTela('tela4'));
-
-        // Função para voltar ao início
-        function voltarAoInicio() {
-            mostrarTela('tela1');
+        window.openDetails = (id) => {
+            const med = medsData.find(m => m.id === id);
+            const taken = appState.history.filter(h => h.medId == id && h.timestamp >= new Date().setHours(0,0,0,0)).length;
+            document.getElementById('modal-title').innerText = med.nome;
+            document.getElementById('modal-freq').innerText = med.freq;
+            document.getElementById('modal-manual-full').innerHTML = `<p>${med.manual}</p><p class="text-rose-500 italic mt-2">${med.obs}</p>`;
+            const btn = document.getElementById('modal-action-btn');
+            if (taken >= med.vezesAoDia) { btn.innerText = "Meta Batida"; btn.disabled = true; btn.classList.add('opacity-40'); }
+            else { btn.innerText = "Registrar Dose"; btn.disabled = false; btn.classList.remove('opacity-40'); btn.onclick = () => { markTaken(id); closeModal(); }; }
+            document.getElementById('modal-color-tag').className = `${med.cor} w-16 h-16 rounded-3xl flex items-center justify-center text-white shadow-xl mb-4`;
+            document.getElementById('med-modal').classList.add('active');
+            lucide.createIcons();
         }
+
+        function markTaken(id) {
+            const med = medsData.find(m => m.id == id);
+            appState.history.push({ medId: id, nome: med.nome, timestamp: Date.now() });
+            renderMeds(); renderCalendar(); updateProgress();
+        }
+
+        window.closeModal = () => document.getElementById('med-modal').classList.remove('active');
+        window.toggleDarkMode = () => { appState.darkMode = !appState.darkMode; document.documentElement.classList.toggle('dark', appState.darkMode); }
+        window.switchTab = (id) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(b => { b.classList.remove('active-nav'); b.classList.add('text-slate-400'); });
+            const tab = document.getElementById(`tab-${id}`); const nav = document.getElementById(`nav-${id}`);
+            if(tab) tab.classList.add('active'); if(nav) { nav.classList.add('active-nav'); nav.classList.remove('text-slate-400'); }
+            window.scrollTo(0, 0); lucide.createIcons();
+        }
+        window.viewDay = (t) => {
+            const date = new Date(t);
+            const count = appState.history.filter(h => new Date(h.timestamp).setHours(0,0,0,0) === t).length;
+            document.getElementById('day-summary').innerHTML = `<strong>${date.toLocaleDateString()}:</strong> ${count} doses registradas.`;
+        }
+        window.requestNotificationPermission = () => {
+            if ("Notification" in window) Notification.requestPermission().then(p => { if (p === 'granted') alert("Notificações ligadas!"); });
+        };
+        window.onload = init;
     </script>
 </body>
-
 </html>
